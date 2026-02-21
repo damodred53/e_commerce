@@ -1,0 +1,44 @@
+framework:
+    workflows:
+        product:
+            name: product
+            type: 'state_machine'
+            audit_trail: true
+            marking_store:
+                type: 'method'
+                property: 'status'
+            supports:
+                - App\Entity\AbstractProduct
+            places:
+                - draft
+                - pending_review
+                - available
+                - unavailable
+                - out_of_stock
+                - discontinued
+            initial_marking: 'draft'
+            transitions:
+                submit_review:
+                    from: draft
+                    to: pending_review
+                approve:
+                    from: pending_review
+                    to: available
+                mark_unavailable:
+                    from: available
+                    to: unavailable
+                mark_out_of_stock:
+                    from: available
+                    to: out_of_stock
+                restock:
+                    from: out_of_stock
+                    to: available
+                reactivate:
+                    from: [unavailable, out_of_stock]
+                    to: available
+                discontinue:
+                    from: [available, unavailable, out_of_stock]
+                    to: discontinued
+                reject:
+                    from: pending_review
+                    to: draft

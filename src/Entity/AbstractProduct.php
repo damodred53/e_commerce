@@ -1,16 +1,19 @@
 <?php
 
-namespace App\AbstractClass;
+namespace App\Entity;
+
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
 
 #[ORM\MappedSuperclass]
 abstract class AbstractProduct
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private ?int $quantity = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $imageUrl = null;
 
     #[ORM\Column(length: 100)]
     private ?string $name = null;
@@ -21,10 +24,8 @@ abstract class AbstractProduct
     #[ORM\Column(type: Types::TEXT)]
     private ?string $description = null;
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
+    #[ORM\Column(type: Types::STRING, length: 20, options: ['default' => 'draft'])]
+    private ?string $status = 'draft';
 
     public function getName(): ?string
     {
@@ -58,6 +59,42 @@ abstract class AbstractProduct
     public function setDescription(string $description): static
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function getQuantity(): ?int
+    {
+        return $this->quantity;
+    }
+
+    public function setQuantity(?int $quantity): static
+    {
+        $this->quantity = $quantity;
+
+        return $this;
+    }
+
+    public function getImageUrl(): ?string
+    {
+        return $this->imageUrl;
+    }
+
+    public function setImageUrl(?string $imageUrl): static
+    {
+        $this->imageUrl = $imageUrl;
+
+        return $this;
+    }
+
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): static
+    {
+        $this->status = $status;
 
         return $this;
     }

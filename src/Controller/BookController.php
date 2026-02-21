@@ -1,0 +1,75 @@
+<?php
+
+namespace App\Controller;
+
+
+use App\Repository\BookRepository;
+use App\Domain\BookDomain;
+use App\DataTransfertObject\BookDto;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+
+#[Route('/api')]
+final class BookController extends AbstractController
+{
+    #[Route('/book', name: 'app_book_index', methods: ['GET'])]
+    public function index(
+        BookRepository $bookRepository
+    ): ?JsonResponse
+    {
+        $books = $bookRepository->findAll();
+
+        return $this->json($books);
+    }
+
+    #[Route('/book/{id}', name: 'app_book_show', methods: ['GET'])]
+    public function show(
+        int $id,
+        BookDomain $bookDomain
+    ): JsonResponse
+    {
+        $bookToShow = $bookDomain->findBookById($id);
+        return $this->json($bookToShow);
+    }
+
+    #[Route('/book', name: 'app_book_create' , methods: ['POST'])]
+    public function create(
+        BookDomain $bookDomain,
+        #[MapRequestPayload] BookDto $bookDto
+    ): JsonResponse
+    {
+        $newBook = $bookDomain->register($bookDto);
+        return $this->json($newBook, Response::HTTP_CREATED, []);
+    }
+
+    #[Route('/book/{id}', name: 'app_book_update', methods: ['PUT'])]
+    public function update(
+        int $id,
+        BookDomain $bookDomain,
+        #[MapRequestPayload] BookDto $bookDto
+    ): JsonResponse
+    {
+        $bookToUpdate = $bookDomain->findBookById($id);
+
+        $updatedBook = $bookDomain->updateBook($bookToUpdate, $bookDto);
+
+        return $this->json($updatedBook, Response::HTTP_OK, []);
+    }
+
+    #[Route('/book/{id}', name: 'app_book_delete', methods: ['DELETE'])]
+    public function delete(
+        int $id,
+        BookDomain $bookDomain,
+    ): JsonResponse
+    {
+        $bookToDelete = $bookDomain->findBookById($id);
+        $bookDomain->removeBook($bookToDelete);
+
+        return $this->json(['message' => 'Book deleted successfully']);
+    }
+
+}
