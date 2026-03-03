@@ -11,6 +11,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Symfony\Component\HttpFoundation\Cookie;
 
 #[Route('/api')]
 final class AuthController extends AbstractController
@@ -68,5 +70,63 @@ final class AuthController extends AbstractController
             'email' => $user->getEmail(),
             'roles' => $user->getRoles(),
         ]);
+    }
+
+    #[Route('/login_cookie', name: 'app_auth_login_cookie', methods: ['POST'])]
+    public function loginCookie(
+        Request $request,
+        UserRepository $userRepository,
+        UserPasswordHasherInterface $passwordHasher,
+        JWTTokenManagerInterface $jwtManager
+    ): JsonResponse {
+        $data = $request->toArray();
+        $email = $data['email'] ?? null;
+        $password = $data['password'] ?? null;
+
+        if (!$email || !$password) {
+            return $this->json(['message' => 'email et password sont requis'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $userRepository->findOneBy(['email' => mb_strtolower($email)]);
+        if (!$user || !$passwordHasher->isPasswordValid($user, $password)) {
+            return $this->json(['message' => 'Identifiants invalides'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $token = $jwtManager->create($user);
+
+        $response = $this->json(['message' => 'Connexion réussie']);
+        $response->headers->setCookie(
+        Cookie::create(
+            'BEARER',
+            $token,
+            time() + 3600,
+            '/',
+            null,     // ✅ pas de domaine
+            true,     // ✅ secure obligatoire si https
+            true,     // ✅ httponly
+            false,
+            Cookie::SAMESITE_NONE  // ✅ obligatoire en cross-origin
+        )
+    );
+        return $response;
+    }
+
+    #[Route('/logout', name: 'app_auth_logout', methods: ['POST'])]
+    public function logout(): JsonResponse
+    {
+        $response = $this->json(['message' => 'Déconnexion réussie']);
+        $response->headers->setCookie(
+            new Cookie(
+                'BEARER',
+                '', // valeur vide
+                1,  // expiration passée (timestamp 1)
+                '/',
+                null, // pas de domaine pour compatibilité
+                false, // secure
+                true,  // httponly
+                false  // samesite
+            )
+        );
+        return $response;
     }
 }

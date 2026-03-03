@@ -5,28 +5,23 @@ namespace App\Entity;
 use App\Repository\MovieRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: MovieRepository::class)]
 class Movie extends AbstractProduct
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
 
     #[ORM\Column]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?int $duration = null;
 
     #[ORM\Column(type: Types::DATE_IMMUTABLE)]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?\DateTimeImmutable $releaseDate = null;
 
     #[ORM\Column]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?bool $isOver18 = null;
-
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
 
     public function getDuration(): ?int
     {

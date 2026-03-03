@@ -27,7 +27,7 @@ final class MovieController extends AbstractController
     {
         $movies = $movieRepository->findAll();
 
-        return $this->json($movies);
+        return $this->json($movies, Response::HTTP_OK, [], ['groups' => ['movie:read']]);
     }
 
     #[Route('/movie/{id}', name: 'app_movie_show', methods: ['GET'])]
@@ -37,7 +37,7 @@ final class MovieController extends AbstractController
     ): JsonResponse
     {
         $movieToShow = $movieDomain->findMovieById($id);
-        return $this->json($movieToShow);
+        return $this->json($movieToShow, Response::HTTP_OK, [], ['groups' => ['movie:read']]);
     }
 
     #[Route('/movie', name: 'app_movie_create' , methods: ['POST'])]
@@ -47,7 +47,7 @@ final class MovieController extends AbstractController
     ): JsonResponse
     {
         $newMovie = $movieDomain->register($movieDto);
-        return $this->json($newMovie, Response::HTTP_CREATED, []);
+        return $this->json($newMovie, Response::HTTP_CREATED, [], ['groups' => ['movie:read']]);
     }
 
     #[Route('/movie/{id}', name: 'app_movie_update', methods: ['PUT'])]
@@ -61,7 +61,7 @@ final class MovieController extends AbstractController
 
         $updatedMovie = $movieDomain->updateMovie($movieToUpdate, $movieDto);
 
-        return $this->json($updatedMovie, Response::HTTP_OK, []);
+        return $this->json($updatedMovie, Response::HTTP_OK, [], ['groups' => ['movie:read']]);
     }
 
     #[Route('/movie/{id}', name: 'app_movie_delete', methods: ['DELETE'])]

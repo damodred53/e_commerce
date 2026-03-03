@@ -5,27 +5,19 @@ namespace App\Entity;
 use App\Repository\BookRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: BookRepository::class)]
 class Book extends AbstractProduct
 {
 
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: Types::INTEGER)]
-    private ?int $id = null;
-
     #[ORM\Column(length: 50)]
+    #[Groups(['book:read', 'book:write'])]
     private ?string $author = null;
 
     #[ORM\Column(type: Types::INTEGER)]
+    #[Groups(['book:read', 'book:write'])]
     private ?int $pages = null;
-
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
 
     public function getAuthor(): ?string
     {

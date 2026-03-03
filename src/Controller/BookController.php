@@ -23,7 +23,7 @@ final class BookController extends AbstractController
     {
         $books = $bookRepository->findAll();
 
-        return $this->json($books);
+        return $this->json($books, Response::HTTP_OK, [], ['groups' => ['book:read']]);
     }
 
     #[Route('/book/{id}', name: 'app_book_show', methods: ['GET'])]
@@ -33,7 +33,7 @@ final class BookController extends AbstractController
     ): JsonResponse
     {
         $bookToShow = $bookDomain->findBookById($id);
-        return $this->json($bookToShow);
+        return $this->json($bookToShow, Response::HTTP_OK, [], ['groups' => ['book:read']]);
     }
 
     #[Route('/book', name: 'app_book_create' , methods: ['POST'])]
