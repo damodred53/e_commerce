@@ -12,10 +12,16 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Workflow\WorkflowInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use App\Traits\ChangeStatusTrait;
 
 #[Route('/api')]
 final class BookController extends AbstractController
 {
+    use ChangeStatusTrait;
+
     #[Route('/book', name: 'app_book_index', methods: ['GET'])]
     public function index(
         BookRepository $bookRepository
@@ -70,6 +76,39 @@ final class BookController extends AbstractController
         $bookDomain->removeBook($bookToDelete);
 
         return $this->json(['message' => 'Book deleted successfully']);
+    }
+
+    #[Route('/book/{id}/publish', name: 'app_book_publish', methods: ['POST'])]
+    public function publishBook(
+        int $id, 
+        #[Autowire(service: 'state_machine.product')]
+        WorkflowInterface $productWorkflow,
+        BookRepository $bookRepository,
+        EntityManagerInterface $entityManager
+    ): Response
+    {
+        $book = $bookRepository->find($id);
+        
+        $this->changeStatut($productWorkflow, $book, $entityManager, 'approve');
+        
+        return new JsonResponse(['status' => $book->getStatus()]);
+    }
+
+    #[Route('/book/{id}/out-of-stock', name: 'app_book_out_of_stock', methods: ['POST'])]
+    public function putOutOfStockBook(
+        int $id, 
+        #[Autowire(service: 'state_machine.product')]
+        WorkflowInterface $productWorkflow,
+        BookRepository $bookRepository,
+        EntityManagerInterface $entityManager
+    ): Response
+    {
+
+        $book = $bookRepository->find($id);
+
+        $this->changeStatut($productWorkflow, $book, $entityManager ,'mark_out_of_stock');
+        
+        return new JsonResponse(['status' => $book->getStatus()]);
     }
 
 }

@@ -9,17 +9,20 @@ use App\DataTransfertObject\MovieDto;
 use Dom\Entity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Workflow\WorkflowInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Traits\ChangeStatusTrait;
 
 #[Route('/api')]
 final class MovieController extends AbstractController
 {
+    use ChangeStatusTrait;
+
+
     #[Route('/movie', name: 'app_movie_index', methods: ['GET'])]
     public function index(
         MovieRepository $movieRepository
@@ -87,10 +90,7 @@ final class MovieController extends AbstractController
     {
         $movie = $movieRepository->find($id);
         
-        if ($productWorkflow->can($movie, 'submit_review')) {
-            $productWorkflow->apply($movie, 'submit_review');
-            $entityManager->flush();
-        }
+        $this->changeStatut($productWorkflow, $movie, $entityManager, 'approve');
         
         return new JsonResponse(['status' => $movie->getStatus()]);
     }
@@ -104,12 +104,10 @@ final class MovieController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response
     {
+
         $movie = $movieRepository->find($id);
-        
-        if ($productWorkflow->can($movie, 'mark_out_of_stock')) {
-            $productWorkflow->apply($movie, 'mark_out_of_stock');
-            $entityManager->flush();
-        }
+
+        $this->changeStatut($productWorkflow, $movie, $entityManager ,'mark_out_of_stock');
         
         return new JsonResponse(['status' => $movie->getStatus()]);
     }

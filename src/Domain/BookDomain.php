@@ -8,9 +8,12 @@ use App\Mapper\BookMapper;
 use App\Repository\BookRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use App\Traits\FlusherTrait;
 
 class BookDomain 
 {
+    use FlusherTrait;
+
     public function __construct(
         private EntityManagerInterface $entityManager,
         private BookRepository $bookRepository
@@ -22,8 +25,7 @@ class BookDomain
     {
         $book = BookMapper::fromDto($bookDto);
 
-        $this->entityManager->persist($book);
-        $this->entityManager->flush();
+        $this->flusher($book, $this->entityManager);
 
         return $book;
     }

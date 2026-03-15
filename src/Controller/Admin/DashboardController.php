@@ -40,7 +40,6 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToDashboard('Dashboard', 'fa fa-home');
         yield MenuItem::linkTo(MovieCrudController::class, 'Movies', 'fas fa-film');
         yield MenuItem::linkTo(BookCrudController::class, 'Books', 'fas fa-book');
-        
     }
 
 }

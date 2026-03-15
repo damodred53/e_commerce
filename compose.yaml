@@ -59,6 +59,14 @@ services:
       # - ./docker/db/data:/var/lib/postgresql/data:rw
 ###< doctrine/doctrine-bundle ###
 
+###> symfony/mailer ###
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+###< symfony/mailer ###
+
 volumes:
   caddy_data:
   caddy_config:

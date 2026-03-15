@@ -13,6 +13,8 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\HttpFoundation\Cookie;
+use App\Event\UserCreatedEvent;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[Route('/api')]
 final class AuthController extends AbstractController
@@ -22,7 +24,8 @@ final class AuthController extends AbstractController
         Request $request,
         UserRepository $userRepository,
         EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $passwordHasher
+        UserPasswordHasherInterface $passwordHasher,
+        EventDispatcherInterface $eventDispatcher
     ): JsonResponse {
         $data = $request->toArray();
         $email = $data['email'] ?? null;
@@ -49,6 +52,8 @@ final class AuthController extends AbstractController
 
         $entityManager->persist($user);
         $entityManager->flush();
+
+        $eventDispatcher->dispatch(new UserCreatedEvent($user), UserCreatedEvent::NAME);
 
         return $this->json(
             ['message' => 'Utilisateur créé'],

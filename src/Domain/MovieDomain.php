@@ -8,9 +8,13 @@ use App\Mapper\MovieMapper;
 use App\Repository\MovieRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use App\Traits\FlusherTrait;
 
 class MovieDomain 
 {
+
+    use FlusherTrait;
+
     public function __construct(
         private EntityManagerInterface $entityManager,
         private MovieRepository $movieRepository
@@ -22,8 +26,7 @@ class MovieDomain
     {
         $movie = MovieMapper::fromDto($movieDto);
 
-        $this->entityManager->persist($movie);
-        $this->entityManager->flush();
+        $this->flusher($movie, $this->entityManager);
 
         return $movie;
     }
