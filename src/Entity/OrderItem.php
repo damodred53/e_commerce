@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\OrderItemRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: OrderItemRepository::class)]
@@ -24,7 +25,10 @@ class OrderItem
     #[ORM\Column]
     private ?int $quantity = null;
 
-    #[ORM\Column(length: 10)]
+    #[ORM\Column(length: 255)]
+    private ?string $productName = null;
+
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     private ?string $price = null;
 
     public function getId(): ?int
@@ -53,6 +57,14 @@ class OrderItem
     {
         $this->product = $product;
 
+        if ($product !== null && $this->productName === null) {
+            $this->productName = $product->getName();
+        }
+
+        if ($product !== null && $this->price === null) {
+            $this->price = $product->getPrice();
+        }
+
         return $this;
     }
 
@@ -64,6 +76,22 @@ class OrderItem
     public function setQuantity(int $quantity): static
     {
         $this->quantity = $quantity;
+
+        if ($this->commande !== null) {
+            $this->commande->recalculateTotal();
+        }
+
+        return $this;
+    }
+
+    public function getProductName(): ?string
+    {
+        return $this->productName;
+    }
+
+    public function setProductName(string $productName): static
+    {
+        $this->productName = $productName;
 
         return $this;
     }
@@ -77,6 +105,18 @@ class OrderItem
     {
         $this->price = $price;
 
+        if ($this->commande !== null) {
+            $this->commande->recalculateTotal();
+        }
+
         return $this;
+    }
+
+    public function getSubtotal(): string
+    {
+        $price = (float) ($this->price ?? '0');
+        $quantity = $this->quantity ?? 0;
+
+        return number_format($price * $quantity, 2, '.', '');
     }
 }

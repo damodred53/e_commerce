@@ -18,6 +18,9 @@ use Symfony\Component\Serializer\Attribute\Groups;
 abstract class AbstractProduct
 {
 
+    /**
+     * @var int    
+     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
@@ -46,7 +49,7 @@ abstract class AbstractProduct
 
     #[ORM\Column(type: Types::STRING, length: 20, options: ['default' => 'draft'])]
     #[Groups(['movie:read', 'movie:write', 'book:read', 'book:write'])]
-    private ?string $status = 'draft';
+    private string $status = 'draft';
 
     /**
      * @var Collection<int, OrderItem>
@@ -157,10 +160,7 @@ abstract class AbstractProduct
     public function removeOrderItem(OrderItem $orderItem): static
     {
         if ($this->orderItems->removeElement($orderItem)) {
-            // set the owning side to null (unless already changed)
-            if ($orderItem->getProduct() === $this) {
-                $orderItem->setProduct(null);
-            }
+            return $this;
         }
 
         return $this;

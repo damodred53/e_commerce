@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\OrderRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
@@ -20,11 +21,11 @@ class Order
     #[ORM\JoinColumn(nullable: false)]
     private ?User $utilisateur = null;
 
-    #[ORM\Column(length: 50)]
-    private ?string $status = null;
+    #[ORM\Column(length: 20, options: ['default' => 'pending'])]
+    private string $status = 'pending';
 
-    #[ORM\Column(length: 50)]
-    private ?string $total = null;
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, options: ['default' => '0.00'])]
+    private string $total = '0.00';
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -32,12 +33,13 @@ class Order
     /**
      * @var Collection<int, OrderItem>
      */
-    #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'commande')]
+    #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'commande', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $orderItems;
 
     public function __construct()
     {
         $this->orderItems = new ArrayCollection();
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -106,6 +108,7 @@ class Order
         if (!$this->orderItems->contains($orderItem)) {
             $this->orderItems->add($orderItem);
             $orderItem->setCommande($this);
+            $this->recalculateTotal();
         }
 
         return $this;
@@ -114,11 +117,27 @@ class Order
     public function removeOrderItem(OrderItem $orderItem): static
     {
         if ($this->orderItems->removeElement($orderItem)) {
-            // set the owning side to null (unless already changed)
             if ($orderItem->getCommande() === $this) {
                 $orderItem->setCommande(null);
             }
+
+            $this->recalculateTotal();
         }
+
+        return $this;
+    }
+
+    public function recalculateTotal(): static
+    {
+        $total = 0.0;
+
+        foreach ($this->orderItems as $orderItem) {
+            $price = (float) ($orderItem->getPrice() ?? '0');
+            $quantity = $orderItem->getQuantity() ?? 0;
+            $total += $price * $quantity;
+        }
+
+        $this->total = number_format($total, 2, '.', '');
 
         return $this;
     }

@@ -25,7 +25,7 @@ final class BookController extends AbstractController
     #[Route('/book', name: 'app_book_index', methods: ['GET'])]
     public function index(
         BookRepository $bookRepository
-    ): ?JsonResponse
+    ): JsonResponse
     {
         $books = $bookRepository->findAll();
 

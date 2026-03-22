@@ -9,12 +9,14 @@ use App\Domain\BookDomain;
 use App\Tests\Mocks\Fixtures\BookDtoFactory;
 use App\Entity\Book;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use PHPUnit\Framework\MockObject\Stub;
 
 use function PHPUnit\Framework\assertInstanceOf;
 
 class BookDomainTest extends TestCase
 {
     private EntityManagerInterface $entityManager;
+    /** @var Stub&BookRepository */
     private BookRepository $bookRepository;
 
     protected function setUp(): void {
@@ -27,7 +29,7 @@ class BookDomainTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
 
         $em->expects($this->once())->method('persist');
-        $em->expects($this->once())->method('persist');
+        $em->expects($this->once())->method('flush');
 
         $domain = new BookDomain($em, $this->bookRepository);
 
@@ -35,7 +37,7 @@ class BookDomainTest extends TestCase
 
         $book = $domain->register($bookDto);
 
-        $this>assertInstanceOf(Book::class, $book);
+        $this->assertInstanceOf(Book::class, $book);
 
     }
 
@@ -49,7 +51,7 @@ class BookDomainTest extends TestCase
         $this->assertSame($book, $domain->findBookById(1));
     }
 
-    public function testFailToReturnQBookByIdReturnsBook(): void
+    public function testFailToReturnBookByIdThrowsException(): void
     {
         $this->bookRepository->method('find')->willReturn(null);
 

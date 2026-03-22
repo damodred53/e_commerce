@@ -9,11 +9,15 @@ use App\Domain\MovieDomain;
 use App\Tests\Mocks\Fixtures\MovieDtoFactory;
 use App\Entity\Movie;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use PHPUnit\Framework\MockObject\Stub;
 
 class MovieDomainTest extends TestCase
 {
     private EntityManagerInterface $em;
+     /** @var Stub&MovieRepository */
     private MovieRepository $repo;
+    
+   
 
     protected function setUp(): void
     {
