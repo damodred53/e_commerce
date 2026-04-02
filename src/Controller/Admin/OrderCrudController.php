@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Order;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
@@ -12,7 +13,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
-use EasyCorp\Bundle\EasyAdminBundle\Action\Action;
 
 class OrderCrudController extends AbstractCrudController
 {
@@ -20,7 +20,6 @@ class OrderCrudController extends AbstractCrudController
     {
         return Order::class;
     }
-
     public function configureFields(string $pageName): iterable
     {
         return [
@@ -38,21 +37,9 @@ class OrderCrudController extends AbstractCrudController
                 ]),
             MoneyField::new('total')->setCurrency('EUR')->hideOnForm(),
             DateTimeField::new('createdAt')->hideOnForm(),
-            TextField::new('orderItems')
+            TextField::new('orderItemsTable', 'Contenu de la commande')
                 ->onlyOnDetail()
-                ->formatValue(function ($value, $entity) {
-                    return implode('<br>', array_map(
-                        fn ($item) => sprintf(
-                            '%s - %d x %s EUR = %s EUR',
-                            $item->getProductName(),
-                            $item->getQuantity(),
-                            $item->getPrice(),
-                            $item->getSubtotal()
-                        ),
-                        $entity->getOrderItems()->toArray()
-                    ));
-                })
-                ->renderAsHtml()
+                ->renderAsHtml(),
         ];
     }
 
@@ -62,5 +49,10 @@ class OrderCrudController extends AbstractCrudController
             ->setEntityLabelInSingular('Commande')
             ->setEntityLabelInPlural('Commandes')
             ->setDefaultSort(['createdAt' => 'DESC']);
+    }
+
+    public function configureActions(Actions $actions): Actions
+    {
+        return $actions->add(Crud::PAGE_INDEX, Action::DETAIL);
     }
 }

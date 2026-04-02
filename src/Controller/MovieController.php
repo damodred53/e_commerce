@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Repository\MovieRepository;
 use App\Domain\MovieDomain;
 use App\DataTransfertObject\MovieDto;
+use App\Service\DocumentStorage;
 use Dom\Entity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -16,6 +17,7 @@ use Symfony\Component\Workflow\WorkflowInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Traits\ChangeStatusTrait;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 #[Route('/api')]
 final class MovieController extends AbstractController
@@ -110,6 +112,33 @@ final class MovieController extends AbstractController
         $this->changeStatut($productWorkflow, $movie, $entityManager ,'mark_out_of_stock');
         
         return new JsonResponse(['status' => $movie->getStatus()]);
+    }
+
+    #[Route('/movie/{id}/download-document', name: 'app_movie_download_document', methods: ['GET'])]
+    public function downloadDocument(
+        int $id,
+        MovieDomain $movieDomain,
+        DocumentStorage $documentStorage
+    )
+    {
+        $movie = $movieDomain->findMovieById($id);
+        $document = $movie->getDocument();
+
+        if ($document === null || $document->getStoredName() === null) {
+            throw $this->createNotFoundException('Aucune fiche technique n est associee a ce film.');
+        }
+
+        $absolutePath = $documentStorage->getAbsolutePath($document->getStoredName());
+
+        if (!is_file($absolutePath)) {
+            throw $this->createNotFoundException('Le fichier associe a ce film est introuvable.');
+        }
+
+        return $this->file(
+            $absolutePath, 
+            $document->getOriginalName(),
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT
+        );
     }
 
 }

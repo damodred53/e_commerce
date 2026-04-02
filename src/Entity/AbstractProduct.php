@@ -7,6 +7,8 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\InheritanceType("JOINED")]
@@ -56,6 +58,16 @@ abstract class AbstractProduct
      */
     #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'product')]
     private Collection $orderItems;
+
+    #[ORM\OneToOne(mappedBy: 'product', targetEntity: Document::class, cascade: ['persist', 'remove'])]
+    private ?Document $document = null;
+
+    #[Assert\File(
+        maxSize: '10M',
+        mimeTypes: ["application/pdf", "text/plain"],
+        mimeTypesMessage: 'Seuls les fichiers PDF et TXT sont autorisés.'
+    )]
+    private ?UploadedFile $documentFile = null;
 
     public function __construct()
     {
@@ -162,6 +174,40 @@ abstract class AbstractProduct
         if ($this->orderItems->removeElement($orderItem)) {
             return $this;
         }
+
+        return $this;
+    }
+
+    public function getDocument(): ?Document
+    {
+        return $this->document;
+    }
+
+    public function setDocument(?Document $document): static
+    {
+        // unset the owning side of the relation if necessary
+        if ($document === null && $this->document !== null) {
+            $this->document->setProduct(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($document !== null && $document->getProduct() !== $this) {
+            $document->setProduct($this);
+        }
+
+        $this->document = $document;
+
+        return $this;
+    }
+
+    public function getDocumentFile(): ?UploadedFile
+    {
+        return $this->documentFile;
+    }
+
+    public function setDocumentFile(?UploadedFile $documentFile): static
+    {
+        $this->documentFile = $documentFile;
 
         return $this;
     }

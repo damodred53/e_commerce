@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Repository\BookRepository;
 use App\Domain\BookDomain;
 use App\DataTransfertObject\BookDto;
+use App\Service\DocumentStorage;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,6 +17,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Workflow\WorkflowInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Traits\ChangeStatusTrait;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 #[Route('/api')]
 final class BookController extends AbstractController
@@ -111,4 +113,30 @@ final class BookController extends AbstractController
         return new JsonResponse(['status' => $book->getStatus()]);
     }
 
+    #[Route('/book/{id}/download-document', name: 'app_book_download_document', methods: ['GET'])]
+    public function downloadBook(
+        int $id,
+        BookDomain $bookDomain,
+        DocumentStorage $documentStorage,
+    )
+    {
+        $book = $bookDomain->findBookById($id);
+        $document = $book->getDocument();
+
+        if ($document === null || $document->getStoredName() === null) {
+            throw $this->createNotFoundException('Aucune fiche technique n est associee a ce livre.');
+        }
+
+        $absolutePath = $documentStorage->getAbsolutePath($document->getStoredName());
+
+        if (!is_file($absolutePath)) {
+            throw $this->createNotFoundException('Le fichier associe a ce livre est introuvable.');
+        }
+
+        return $this->file(
+            $absolutePath,
+            $document->getOriginalName(),
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT
+        );
+    }
 }
